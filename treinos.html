@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Treinos – Carga & Reps</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #f4f4f4;
+    }
+    .app-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .subtitle {
+      font-size: 0.9rem;
+      color: #555;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    /* Barra superior – data + tipo de treino (responsiva) */
+    .top-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .top-bar > div {
+      width: 100%;
+    }
+    @media (min-width: 600px) {
+      .top-bar {
+        flex-direction: row;
+      }
+      .top-bar > div {
+        flex: 1;
+      }
+    }
+
+    label {
+      font-size: 0.8rem;
+      color: #555;
+      display: block;
+      margin-bottom: 4px;
+    }
+    input[type="date"],
+    select,
+    input[type="text"],
+    input[type="number"],
+    button {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 0.9rem;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      background: #1976d2;
+      color: #fff;
+      font-weight: 600;
+    }
+    button.secondary {
+      background: #eee;
+      color: #333;
+      border: 1px solid #ccc;
+    }
+    button.danger {
+      background: #c62828;
+      color: #fff;
+    }
+    button:active {
+      opacity: 0.85;
+    }
+    .buttons-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .buttons-row button {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .exercise-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .exercise-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.07);
+    }
+    .exercise-header {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .exercise-header input {
+      flex: 1;
+    }
+    .exercise-header button {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+
+    .sets-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 4px;
+    }
+    .sets-table th,
+    .sets-table td {
+      padding: 4px;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+    .sets-table th {
+      border-bottom: 1px solid #ddd;
+      color: #555;
+    }
+    .sets-table input[type="number"] {
+      width: 100%;
+      padding: 4px;
+      font-size: 0.8rem;
+    }
+    .small-btn {
+      font-size: 0.75rem;
+      padding: 4px 6px;
+    }
+    .section-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin: 12px 0 6px;
+      color: #333;
+    }
+    #saveStatus {
+      font-size: 0.8rem;
+      color: #2e7d32;
+      margin-bottom: 8px;
+      min-height: 16px;
+    }
+
+    .history-box {
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.07);
+      margin-bottom: 40px;
+    }
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    .history-table th,
+    .history-table td {
+      padding: 4px;
+      border-bottom: 1px solid #eee;
+      font-size: 0.8rem;
+      text-align: left;
+    }
+    .muted {
+      font-size: 0.8rem;
+      color: #777;
+    }
+
+    @media (max-width: 600px) {
+      .exercise-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .exercise-header button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <h1>Controle de Treinos</h1>
+    <div class="subtitle">Registre carga (kg) e repetições por exercício – Treinos A / B / C / D</div>
+
+    <div class="top-bar">
+      <div>
+        <label for="workoutDate">Data do treino</label>
+        <input type="date" id="workoutDate" />
+      </div>
+      <div>
+        <label for="workoutType">Treino</label>
+        <select id="workoutType">
+          <option value="A">Treino A – Peito / Ombros</option>
+          <option value="B">Treino B – Pernas</option>
+          <option value="C">Treino C – Costas / Ombros post.</option>
+          <option value="D">Treino D – Bíceps / Tríceps</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="buttons-row">
+      <button id="loadWorkoutBtn">Carregar treino do dia</button>
+      <button id="saveWorkoutBtn">Salvar treino</button>
+      <button id="addExerciseBtn" class="secondary">Adicionar exercício</button>
+    </div>
+
+    <div id="saveStatus"></div>
+
+    <div class="section-title">Exercícios do treino</div>
+    <div id="exerciseList" class="exercise-list"></div>
+
+    <div class="section-title">Histórico por exercício</div>
+    <div class="history-box">
+      <label for="historyExerciseSelect">Escolha um exercício para ver o histórico</label>
+      <select id="historyExerciseSelect">
+        <option value="">Selecione...</option>
+      </select>
+      <button id="showHistoryBtn" class="secondary" style="margin-top:8px;">Ver histórico</button>
+      <div id="historyArea" class="muted" style="margin-top:8px;">Nenhum exercício selecionado.</div>
+    </div>
+  </div>
+
+  <script>
+    // ====== Templates dos treinos A/B/C/D ======
+    const TRAINING_TEMPLATES = {
+      A: [
+        "Supino reto com barra",
+        "Supino inclinado halteres",
+        "Crossover (alto p/ baixo)",
+        "Crucifixo inclinado máquina",
+        "Desenvolvimento militar barra",
+        "Elevação lateral halteres",
+        "Elevação frontal barra/disco",
+        "Elevação posterior (peck-deck)"
+      ],
+      B: [
+        "Agachamento livre",
+        "Leg press",
+        "Cadeira extensora",
+        "Agachamento búlgaro halteres",
+        "Mesa flexora",
+        "Stiff com barra",
+        "Panturrilha em pé"
+      ],
+      C: [
+        "Barra fixa (pegada aberta)",
+        "Remada curvada barra",
+        "Puxada supinada polia",
+        "Remada unilateral halter",
+        "Pullover máquina/cabo",
+        "Elevação posterior (peck-deck)",
+        "Face pull (corda)",
+        "Encolhimento halteres"
+      ],
+      D: [
+        "Rosca direta barra",
+        "Rosca alternada halteres",
+        "Rosca martelo",
+        "Tríceps corda",
+        "Tríceps francês halteres",
+        "Mergulho entre bancos",
+        "Rosca concentrada unilateral",
+        "Kickback"
+      ]
+    };
+
+    const STORAGE_KEY = "treinoTrackerData_v1";
+
+    function getTodayISO() {
+      const d = new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function loadAllData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return {};
+        return JSON.parse(raw);
+      } catch (e) {
+        console.error("Erro ao ler storage:", e);
+        return {};
+      }
+    }
+
+    function saveAllData(data) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.error("Erro ao salvar storage:", e);
+      }
+    }
+
+    function getCurrentKey() {
+      const date = document.getElementById("workoutDate").value;
+      const type = document.getElementById("workoutType").value;
+      return `${date}_${type}`;
+    }
+
+    function clearExerciseList() {
+      document.getElementById("exerciseList").innerHTML = "";
+    }
+
+    function createExerciseCard(exerciseObj = null) {
+      const container = document.createElement("div");
+      container.className = "exercise-card";
+
+      const header = document.createElement("div");
+      header.className = "exercise-header";
+
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.placeholder = "Nome do exercício";
+      nameInput.className = "exercise-name";
+      if (exerciseObj && exerciseObj.name) {
+        nameInput.value = exerciseObj.name;
+      }
+
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "danger small-btn";
+      removeBtn.textContent = "Remover exercício";
+      removeBtn.addEventListener("click", () => {
+        container.remove();
+      });
+
+      header.appendChild(nameInput);
+      header.appendChild(removeBtn);
+
+      const table = document.createElement("table");
+      table.className = "sets-table";
+
+      const thead = document.createElement("thead");
+      thead.innerHTML = `
+        <tr>
+          <th>Série</th>
+          <th>Carga (kg)</th>
+          <th>Reps</th>
+          <th></th>
+        </tr>
+      `;
+
+      const tbody = document.createElement("tbody");
+
+      function addSetRow(setObj = null) {
+        const row = document.createElement("tr");
+
+        const idxCell = document.createElement("td");
+        idxCell.className = "set-index";
+
+        const weightCell = document.createElement("td");
+        const repsCell = document.createElement("td");
+        const removeCell = document.createElement("td");
+
+        const weightInput = document.createElement("input");
+        weightInput.type = "number";
+        weightInput.step = "0.5";
+        weightInput.min = "0";
+        weightInput.placeholder = "kg";
+
+        const repsInput = document.createElement("input");
+        repsInput.type = "number";
+        repsInput.step = "1";
+        repsInput.min = "0";
+        repsInput.placeholder = "reps";
+
+        if (setObj) {
+          if (setObj.weight !== undefined && setObj.weight !== null) weightInput.value = setObj.weight;
+          if (setObj.reps !== undefined && setObj.reps !== null) repsInput.value = setObj.reps;
+        }
+
+        const removeSetBtn = document.createElement("button");
+        removeSetBtn.className = "secondary small-btn";
+        removeSetBtn.textContent = "X";
+        removeSetBtn.addEventListener("click", () => {
+          row.remove();
+          updateSetIndices();
+        });
+
+        weightCell.appendChild(weightInput);
+        repsCell.appendChild(repsInput);
+        removeCell.appendChild(removeSetBtn);
+
+        row.appendChild(idxCell);
+        row.appendChild(weightCell);
+        row.appendChild(repsCell);
+        row.appendChild(removeCell);
+
+        tbody.appendChild(row);
+        updateSetIndices();
+      }
+
+      function updateSetIndices() {
+        const rows = tbody.querySelectorAll("tr");
+        rows.forEach((r, i) => {
+          const cell = r.querySelector(".set-index");
+          if (cell) cell.textContent = i + 1;
+        });
+      }
+
+      if (exerciseObj && Array.isArray(exerciseObj.sets) && exerciseObj.sets.length > 0) {
+        exerciseObj.sets.forEach(set => addSetRow(set));
+      } else {
+        for (let i = 0; i < 3; i++) addSetRow();
+      }
+
+      const addSetBtn = document.createElement("button");
+      addSetBtn.className = "secondary small-btn";
+      addSetBtn.textContent = "Adicionar série";
+      addSetBtn.style.marginTop = "6px";
+      addSetBtn.addEventListener("click", () => addSetRow());
+
+      table.appendChild(thead);
+      table.appendChild(tbody);
+
+      container.appendChild(header);
+      container.appendChild(table);
+      container.appendChild(addSetBtn);
+
+      return container;
+    }
+
+    function renderExercises(exercises) {
+      clearExerciseList();
+      const list = document.getElementById("exerciseList");
+      exercises.forEach(ex => {
+        const card = createExerciseCard(ex);
+        list.appendChild(card);
+      });
+    }
+
+    function buildExercisesFromTemplate(type) {
+      const names = TRAINING_TEMPLATES[type] || [];
+      return names.map(name => ({
+        name,
+        sets: [{}, {}, {}] // 3 séries vazias
+      }));
+    }
+
+    function loadWorkout() {
+      const data = loadAllData();
+      const key = getCurrentKey();
+      const workout = data[key];
+
+      if (workout && workout.exercises) {
+        renderExercises(workout.exercises);
+        showSaveStatus("Treino carregado.", true);
+      } else {
+        const type = document.getElementById("workoutType").value;
+        const templateExercises = buildExercisesFromTemplate(type);
+        renderExercises(templateExercises);
+        showSaveStatus("Novo treino criado a partir do template.", true);
+      }
+      updateHistoryExerciseOptions();
+    }
+
+    function saveWorkout() {
+      const date = document.getElementById("workoutDate").value;
+      if (!date) {
+        showSaveStatus("Defina uma data para salvar o treino.", false);
+        return;
+      }
+      const type = document.getElementById("workoutType").value;
+      const key = `${date}_${type}`;
+
+      const exerciseCards = document.querySelectorAll(".exercise-card");
+      const exercises = [];
+      exerciseCards.forEach(card => {
+        const name = card.querySelector(".exercise-name").value.trim();
+        if (!name) return;
+
+        const sets = [];
+        const rows = card.querySelectorAll("tbody tr");
+        rows.forEach(row => {
+          const inputs = row.querySelectorAll("input");
+          const weight = inputs[0].value.trim();
+          const reps = inputs[1].value.trim();
+          if (weight === "" && reps === "") return;
+          sets.push({
+            weight: weight === "" ? null : Number(weight),
+            reps: reps === "" ? null : Number(reps)
+          });
+        });
+
+        if (sets.length > 0) {
+          exercises.push({ name, sets });
+        }
+      });
+
+      if (exercises.length === 0) {
+        showSaveStatus("Nenhum exercício preenchido para salvar.", false);
+        return;
+      }
+
+      const data = loadAllData();
+      data[key] = {
+        date,
+        type,
+        exercises
+      };
+      saveAllData(data);
+      showSaveStatus("Treino salvo com sucesso.", true);
+      updateHistoryExerciseOptions();
+    }
+
+    function showSaveStatus(msg, ok) {
+      const el = document.getElementById("saveStatus");
+      el.textContent = msg;
+      el.style.color = ok ? "#2e7d32" : "#c62828";
+      if (!msg) return;
+      setTimeout(() => {
+        el.textContent = "";
+      }, 4000);
+    }
+
+    function addEmptyExercise() {
+      const list = document.getElementById("exerciseList");
+      const card = createExerciseCard();
+      list.appendChild(card);
+    }
+
+    function updateHistoryExerciseOptions() {
+      const data = loadAllData();
+      const allExercises = new Set();
+
+      Object.values(data).forEach(workout => {
+        (workout.exercises || []).forEach(ex => {
+          if (ex.name) allExercises.add(ex.name);
+        });
+      });
+
+      const select = document.getElementById("historyExerciseSelect");
+      const currentValue = select.value;
+      select.innerHTML = '<option value="">Selecione...</option>';
+      Array.from(allExercises)
+        .sort((a, b) => a.localeCompare(b, "pt-BR"))
+        .forEach(name => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          select.appendChild(opt);
+        });
+
+      if (currentValue && allExercises.has(currentValue)) {
+        select.value = currentValue;
+      }
+    }
+
+    function showHistory() {
+      const exerciseName = document.getElementById("historyExerciseSelect").value;
+      const area = document.getElementById("historyArea");
+      if (!exerciseName) {
+        area.textContent = "Nenhum exercício selecionado.";
+        return;
+      }
+
+      const data = loadAllData();
+      const rows = [];
+
+      Object.values(data).forEach(workout => {
+        (workout.exercises || []).forEach(ex => {
+          if (ex.name === exerciseName) {
+            const setsStr = ex.sets
+              .map((s, i) => {
+                const w = s.weight != null ? s.weight + "kg" : "-";
+                const r = s.reps != null ? s.reps + " reps" : "-";
+                return `S${i + 1}: ${w} x ${r}`;
+              })
+              .join(" | ");
+            rows.push({
+              date: workout.date,
+              type: workout.type,
+              setsStr
+            });
+          }
+        });
+      });
+
+      if (rows.length === 0) {
+        area.textContent = "Nenhum registro encontrado para esse exercício.";
+        return;
+      }
+
+      rows.sort((a, b) => a.date.localeCompare(b.date));
+
+      let html = '<table class="history-table">';
+      html += "<thead><tr><th>Data</th><th>Treino</th><th>Séries</th></tr></thead><tbody>";
+      rows.forEach(r => {
+        html += `<tr>
+          <td>${r.date}</td>
+          <td>${r.type}</td>
+          <td>${r.setsStr}</td>
+        </tr>`;
+      });
+      html += "</tbody></table>";
+
+      area.innerHTML = html;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const dateInput = document.getElementById("workoutDate");
+      dateInput.value = getTodayISO();
+
+      document.getElementById("loadWorkoutBtn").addEventListener("click", loadWorkout);
+      document.getElementById("saveWorkoutBtn").addEventListener("click", saveWorkout);
+      document.getElementById("addExerciseBtn").addEventListener("click", addEmptyExercise);
+      document.getElementById("showHistoryBtn").addEventListener("click", showHistory);
+
+      // Carrega template inicial para o dia atual e treino selecionado
+      loadWorkout();
+    });
+  </script>
+</body>
+</html>
